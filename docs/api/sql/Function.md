@@ -839,7 +839,7 @@ Result:
 !!!note
     In Sedona up to and including version 1.2 the behaviour of ST_MakeValid was different.
 Be sure to check you code when upgrading. The previous implementation only worked for (multi)polygons and had a different interpretation of the second, boolean, argument.
-It would also sometimes return multiple geometries for a single geomtry input.
+It would also sometimes return multiple geometries for a single geometry input.
 
 ## ST_MinimumBoundingCircle
 
@@ -1127,7 +1127,7 @@ Result:
 
 ## ST_SetSRID
 
-Introduction: Sets the spatial refence system identifier (SRID) of the geometry.
+Introduction: Sets the spatial reference system identifier (SRID) of the geometry.
 
 Format: `ST_SetSRID (A:geometry, srid: Integer)`
 
@@ -1178,7 +1178,7 @@ Output: `MULTILINESTRING ((0 0, 0.5 0.5), (0.5 0.5, 1 1), (1 1, 1.5 1.5, 2 2))`
 
 ## ST_SRID
 
-Introduction: Return the spatial refence system identifier (SRID) of the geometry.
+Introduction: Return the spatial reference system identifier (SRID) of the geometry.
 
 Format: `ST_SRID (A:geometry)`
 

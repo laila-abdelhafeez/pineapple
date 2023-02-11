@@ -63,7 +63,7 @@ val pointRDDSplitter = FileDataSplitter.TSV
 #### PolygonRDD/LineStringRDD from CSV/TSV
 In general, polygon and line string data is stored in WKT, WKB, GeoJSON and Shapefile formats instead of CSV/TSV because the geometries in a file may have different lengths. However, if all polygons / line strings in your CSV/TSV possess the same length, you can create PolygonRDD and LineStringRDD from these files.
 
-Suppose we have a `checkinshape.csv` CSV file at Path `/Download/checkinshape.csv ` as follows:
+Suppose we have a `checkinshape.csv` CSV file at Path `/Download/checkinshape.csv` as follows:
 ```
 -88.331492,32.324142,-88.331492,32.324142,-88.331492,32.324142,-88.331492,32.324142,-88.331492,32.324142,hotel
 -88.175933,32.360763,-88.175933,32.360763,-88.175933,32.360763,-88.175933,32.360763,-88.175933,32.360763,gas
@@ -216,7 +216,7 @@ objectRDD.CRSTransform(sourceCrsCode, targetCrsCode, false)
 `false` in CRSTransform(sourceCrsCode, targetCrsCode, false) means that it will not tolerate Datum shift. If you want it to be lenient, use `true` instead.
 
 !!!warning
-	CRS transformation should be done right after creating each SpatialRDD, otherwise it will lead to wrong query results. For instace, use something like this:
+	CRS transformation should be done right after creating each SpatialRDD, otherwise it will lead to wrong query results. For instance, use something like this:
 	```Scala
 	var objectRDD = new PointRDD(sc, pointRDDInputLocation, pointRDDOffset, pointRDDSplitter, carryOtherAttributes)
 	objectRDD.CRSTransform("epsg:4326", "epsg:3857", false)
@@ -410,7 +410,7 @@ val result = JoinQuery.SpatialJoinQuery(objectRDD, queryWindowRDD, usingIndex, s
 	FROM city, superhero
 	WHERE ST_Contains(city.geom, superhero.geom);
 	```
-	Find the super heros in each city
+	Find the superheroes in each city
 
 ### Use spatial partitioning
 
@@ -502,7 +502,7 @@ The output format of the distance join query is [here](#output-format_2).
 	FROM city, superhero
 	WHERE ST_Distance(city.geom, superhero.geom) <= 10;
 	```
-	Find the super heros within 10 miles of each city
+	Find the superheroes within 10 miles of each city
 	
 ## Save to permanent storage
 
