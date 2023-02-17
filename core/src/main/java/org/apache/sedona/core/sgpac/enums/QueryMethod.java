@@ -7,7 +7,9 @@ package org.apache.sedona.core.sgpac.enums;
  FR: traditional filter-refine approach
  */
 
-public enum QueryMethod {
+import java.io.Serializable;
+
+public enum QueryMethod implements Serializable {
     SGPAC_2L,
     SGPAC_1L,
     SGPAC_QO,

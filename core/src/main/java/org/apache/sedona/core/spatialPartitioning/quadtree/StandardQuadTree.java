@@ -46,7 +46,7 @@ public class StandardQuadTree<T> extends PartitioningUtils
     // Maximum number of items in any given zone. When reached, a zone is sub-divided.
     private final int maxItemsPerZone;
     private final int maxLevel;
-    private final int level;
+    protected final int level;
     // the current nodes
     private final List<QuadNode<T>> nodes = new ArrayList<>();
     // current rectangle zone
@@ -237,7 +237,7 @@ public class StandardQuadTree<T> extends PartitioningUtils
      * Traverses the tree top-down breadth-first and calls the visitor
      * for each node. Stops traversing if a call to Visitor.visit returns false.
      */
-    private void traverse(Visitor<T> visitor)
+    protected void traverse(Visitor<T> visitor)
     {
         if (!visitor.visit(this)) {
             return;
@@ -403,7 +403,7 @@ public class StandardQuadTree<T> extends PartitioningUtils
         return matches;
     }
 
-    private boolean disjoint(Envelope r1, Envelope r2)
+    protected boolean disjoint(Envelope r1, Envelope r2)
     {
         return !r1.intersects(r2) && !r1.covers(r2) && !r2.covers(r1);
     }
@@ -504,7 +504,7 @@ public class StandardQuadTree<T> extends PartitioningUtils
         return leafZones;
     }
 
-    private interface Visitor<T>
+    protected interface Visitor<T>
     {
         /**
          * Visits a single node of the tree
