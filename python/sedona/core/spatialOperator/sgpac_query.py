@@ -1,31 +1,73 @@
+from pyspark import RDD
 
 from sedona.utils.decorators import require
 from sedona.core.SpatialRDD.spatial_rdd import SpatialRDD
-from sedona.core.spatialOperator.rdd import SedonaPairRDD
 
 
 class SGPACQuery:
 
     @classmethod
-    @require(["SGPACQuery", "GeoSerializerData"])
-    def sgpac2L(self, data: SpatialRDD, polygonLayer: SpatialRDD):
+    @require(["SGPACQuery"])
+    def sgpac2L(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
+        """
+
+        :param data: SpatialRDD
+        :param polygonLayer: SpatialRDD
+        :return:
+        """
         jvm = data._jvm
         srdd = jvm.SGPACQuery.SGPAC_2L(data._srdd, polygonLayer._srdd)
-        return SedonaPairRDD(srdd).to_rdd()
-
+        return srdd
 
     @classmethod
-    @require(["SGPACQuery", "GeoSerializerData"])
-    def sgpac1L(self, data: SpatialRDD, polygonLayer: SpatialRDD):
+    @require(["SGPACQuery"])
+    def sgpac1L(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
+        """
+
+        :param data: SpatialRDD
+        :param polygonLayer: SpatialRDD
+        :return:
+        """
         jvm = data._jvm
         srdd = jvm.SGPACQuery.SGPAC_1L(data._srdd, polygonLayer._srdd)
-        return SedonaPairRDD(srdd).to_rdd()
+        return srdd
+
+    @classmethod
+    @require(["SGPACQuery"])
+    def sgpacQO(cls, data: SpatialRDD, polygonLayer: SpatialRDD, estimatorCellCount: int) -> RDD:
+        """
+
+        :param data: SpatialRDD
+        :param polygonLayer: SpatialRDD
+        :return:
+        """
+        jvm = data._jvm
+        srdd = jvm.SGPACQuery.SGPAC_QO(data._srdd, polygonLayer._srdd, estimatorCellCount)
+        return srdd
 
 
     @classmethod
-    @require(["SGPACQuery", "GeoSerializerData"])
-    def sgpacQO(self, data: SpatialRDD, polygonLayer: SpatialRDD, estimatorCellCount: int):
-        jvm = data._jvm
-        srdd = jvm.SGPACQuery.SGPAC_QO(data._srdd, polygonLayer._srdd, estimatorCellCount)
-        return SedonaPairRDD(srdd).to_rdd()
+    @require(["SGPACQuery"])
+    def sgpacFR(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
+        """
 
+        :param data: SpatialRDD
+        :param polygonLayer: SpatialRDD
+        :return:
+        """
+        jvm = data._jvm
+        srdd = jvm.SGPACQuery.FilterRefine(data._srdd, polygonLayer._srdd)
+        return srdd
+
+    @classmethod
+    @require(["SGPACQuery"])
+    def sgpacJoin(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
+        """
+
+        :param data: SpatialRDD
+        :param polygonLayer: SpatialRDD
+        :return:
+        """
+        jvm = data._jvm
+        srdd = jvm.SGPACQuery.Join(data._srdd, polygonLayer._srdd)
+        return srdd

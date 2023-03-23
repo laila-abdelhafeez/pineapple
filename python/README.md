@@ -1,9 +1,6 @@
-# Apache Sedona
+# Pineapple
 
-This library is the Python wrapper for Apache Sedona.
+This library is the Python wrapper for Pineapple project.
 
-Apache Sedona is a cluster computing system for processing large-scale spatial data. 
-Apache Sedona extends Apache Spark / SparkSQL with a set of out-of-the-box Spatial Resilient Distributed Datasets (SRDDs)/ SpatialSQL that efficiently load, process, and analyze large-scale spatial data across machines.
-
-Please visit the official Apache Sedona website:
-https://sedona.apache.org/
+Pineapple is an extension of Apache Sedona supporting complex spatial operators
+including spatial group-by aggregate counting and a parallel doubly-connected edge list.

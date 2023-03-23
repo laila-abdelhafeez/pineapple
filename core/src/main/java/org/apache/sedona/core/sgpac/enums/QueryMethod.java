@@ -13,5 +13,6 @@ public enum QueryMethod implements Serializable {
     SGPAC_2L,
     SGPAC_1L,
     SGPAC_QO,
-    FR
+    FR,
+    SP_JOIN
 }

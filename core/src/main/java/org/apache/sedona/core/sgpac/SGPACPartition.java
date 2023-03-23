@@ -4,7 +4,9 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.sedona.core.sgpac.RTree.RtreeSGPAC;
 import org.apache.sedona.core.sgpac.RTree.RtreeSGPACQO;
 import org.apache.sedona.core.sgpac.enums.QueryMethod;
+import org.apache.spark.TaskContext;
 import org.apache.spark.api.java.function.FlatMapFunction2;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -14,11 +16,7 @@ import org.locationtech.jts.index.strtree.STRtree;
 import scala.Tuple2;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
+import java.util.*;
 
 
 public class SGPACPartition<U extends Geometry>
@@ -30,13 +28,17 @@ public class SGPACPartition<U extends Geometry>
     SGPAC sgpacQuery;
     int estimatorCellCount = 10;
 
-    public SGPACPartition(QueryMethod queryOption) {
+    List<Envelope> partitionGrids;
+
+    public SGPACPartition(QueryMethod queryOption, List<Envelope> partitionGrids) {
         this.queryMethod = queryOption;
+        this.partitionGrids = partitionGrids;
     }
 
-    public SGPACPartition(int estimatorCellCount) {
+    public SGPACPartition(int estimatorCellCount, List<Envelope> partitionGrids) {
         this.queryMethod = QueryMethod.SGPAC_QO;
         this.estimatorCellCount = estimatorCellCount;
+        this.partitionGrids = partitionGrids;
     }
 
     /*
@@ -46,6 +48,8 @@ public class SGPACPartition<U extends Geometry>
      */
 
     public Iterator<Tuple2<String, Integer>> call(Iterator<SpatialIndex> dataIndexIterator, Iterator<U> polygonLayerIterator) throws Exception {
+
+        int partitionIndex = TaskContext.getPartitionId();
 
         Set<Tuple2<String, Integer>> result = new HashSet<>();
 
@@ -76,6 +80,7 @@ public class SGPACPartition<U extends Geometry>
                 } else {
                     sgpacQuery = new RtreeSGPAC(rtreeIndex);
                 }
+                sgpacQuery.setBoundary(partitionGrids.get(partitionIndex));
                 result = sgpacQuery.query(polygonLayer, queryMethod);
 
 

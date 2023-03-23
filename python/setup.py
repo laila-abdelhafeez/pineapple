@@ -40,13 +40,13 @@ ext_modules = [
 ]
 
 setup(
-    name='apache-sedona',
+    name='pineapple-spark',
     version=version,
-    description='Apache Sedona is a cluster computing system for processing large-scale spatial data',
-    url='https://sedona.apache.org',
-    license="Apache License v2.0",
-    author='Apache Sedona',
-    author_email='dev@sedona.apache.org',
+    description='Pineapple is an extension of Apache Sedona for processing large-scale complex spatial queries',
+    url='https://github.com/laila-abdelhafeez/pineapple',
+    license="",
+    author='Laila Abdelhafeez',
+    author_email='labde005@ucr.edu',
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     ext_modules=ext_modules,
     long_description=long_description,
@@ -55,9 +55,9 @@ setup(
     install_requires=['attrs', "shapely>=1.7.0"],
     extras_require={"spark": ['pyspark>=2.3.0']},
     project_urls={
-        'Documentation': 'https://sedona.apache.org',
-        'Source code': 'https://github.com/apache/sedona',
-        'Bug Reports': 'https://issues.apache.org/jira/projects/SEDONA'
+        'Documentation': 'https://https://github.com/laila-abdelhafeez/pineapple',
+        'Source code': 'https://github.com/laila-abdelhafeez/pineapple',
+        'Bug Reports': 'https://github.com/laila-abdelhafeez/pineapple'
     },
     classifiers=[
         "Programming Language :: Python :: 3",

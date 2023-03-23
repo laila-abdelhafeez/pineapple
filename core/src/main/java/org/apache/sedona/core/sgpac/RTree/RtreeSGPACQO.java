@@ -118,7 +118,12 @@ public class RtreeSGPACQO extends RtreeSGPAC {
 
     public Set<Envelope> getIntersectingCells(Envelope queryMBR) {
         Set<Envelope> result = new HashSet<>();
-        getIntersectingCells(root, queryMBR, result);
+        if(queryMBR.contains(boundary)) {
+            result.add(boundary);
+        } else if(queryMBR.intersects(boundary)) {
+            List children = root.getChildBoundables();
+            for(Object child : children) getIntersectingCells(child, queryMBR, result);
+        }
         return result;
     }
 

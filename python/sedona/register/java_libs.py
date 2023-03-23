@@ -52,6 +52,7 @@ class SedonaJvmLib(Enum):
     st_functions = "org.apache.spark.sql.sedona_sql.expressions.st_functions"
     st_predicates = "org.apache.spark.sql.sedona_sql.expressions.st_predicates"
     st_aggregates = "org.apache.spark.sql.sedona_sql.expressions.st_aggregates"
+    SGPACQuery = "org.apache.sedona.core.sgpac.SGPACQuery"
 
     @classmethod
     def from_str(cls, geo_lib: str) -> 'SedonaJvmLib':

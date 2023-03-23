@@ -11,6 +11,7 @@ import org.locationtech.jts.index.strtree.STRtree;
 import scala.Tuple2;
 
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +24,6 @@ public class RtreeSGPAC implements SGPAC {
     public RtreeSGPAC(STRtree dataIndex) {
         this.dataIndex = dataIndex;
         root = dataIndex.getRoot();
-        boundary = (Envelope) dataIndex.getRoot().getBounds();
     }
 
     public Set<Tuple2<String, Integer>> query(GeometryCollection polygonLayer, QueryMethod method) {
@@ -63,9 +63,14 @@ public class RtreeSGPAC implements SGPAC {
         return results;
     }
 
+    @Override
+    public void setBoundary(Envelope envelope) {
+        boundary = envelope;
+    }
+
 
     public Integer FR(Geometry queryPolygon) {
-        Set<Geometry> result = new HashSet<>();
+        List<Geometry> result = new ArrayList<>();
         List<Geometry> candidateSet = dataIndex.query(queryPolygon.getEnvelopeInternal());
         for (Geometry candidateItem : candidateSet) {
             if(queryPolygon.contains(candidateItem) || queryPolygon.intersects(candidateItem)) {
@@ -82,7 +87,7 @@ public class RtreeSGPAC implements SGPAC {
 
         switch (state) {
             case WITHIN:
-                return new HashSet<Geometry>(dataIndex.query(boundary)).size();
+                return dataIndex.query(boundary).size();
             case INTERSECT:
                 return FR(clippedPolygon);
         }
@@ -97,10 +102,10 @@ public class RtreeSGPAC implements SGPAC {
 
         switch (state) {
             case WITHIN:
-                return new HashSet<Geometry>(dataIndex.query(boundary)).size();
+                return dataIndex.query(boundary).size();
             case INTERSECT:
                 if(!dataIndex.isEmpty()) {
-                    Set<Geometry> result = new HashSet<>();
+                    List<Geometry> result = new ArrayList<>();
                     query(clippedPolygon, root, false, result);
                     return result.size();
                 }
@@ -108,7 +113,7 @@ public class RtreeSGPAC implements SGPAC {
         return 0;
     }
 
-    public void query(Geometry queryPolygon, Object node, boolean within, Set<Geometry> result) {
+    public void query(Geometry queryPolygon, Object node, boolean within, List<Geometry> result) {
 
         // node is a leaf node
         if(node instanceof ItemBoundable) {
@@ -116,21 +121,8 @@ public class RtreeSGPAC implements SGPAC {
             Geometry item = (Geometry) itemBoundable.getItem();
             if(within) {
                 result.add(item);
-            } else {
-                if(queryPolygon instanceof GeometryCollection) {
-                    GeometryCollection query = (GeometryCollection) queryPolygon;
-                    for (int i = 0; i < query.getNumGeometries(); ++i) {
-                        try {
-                            if(query.getGeometryN(i).contains(item) || query.getGeometryN(i).intersects(item)){
-                                result.add(item);
-                            }
-                        } catch (Exception ignore) {}
-                    }
-                } else {
-                    if(queryPolygon.contains(item) || queryPolygon.intersects(item)){
-                        result.add(item);
-                    }
-                }
+            } else if(queryPolygon.contains(item) || queryPolygon.intersects(item)){
+                result.add(item);
             }
         }
 
@@ -153,12 +145,12 @@ public class RtreeSGPAC implements SGPAC {
                             query(clippedPolygon, child, true, result);
                         }
                         break;
-                    case INTERSECT :
+                    case INTERSECT:
                         for(Object child : currentNode.getChildBoundables()) {
                             query(clippedPolygon, child, false, result);
                         }
                         break;
-                    default:
+                    case OUTSIDE:
                         break;
                 }
             }

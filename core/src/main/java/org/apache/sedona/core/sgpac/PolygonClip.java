@@ -1,13 +1,11 @@
 package org.apache.sedona.core.sgpac;
 
 import org.apache.sedona.core.sgpac.enums.PolygonState;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.*;
+import scala.Serializable;
 import scala.Tuple2;
 
-public class PolygonClip {
+public class PolygonClip implements Serializable {
 
     public static Geometry createEnvelopeGeometry(Envelope envelope) {
         Coordinate[] coordinates = new Coordinate[5];
@@ -21,41 +19,68 @@ public class PolygonClip {
         return geometryFactory.createPolygon(coordinates);
     }
 
+    public static Point createPointGeometry(double x, double y) {
+        GeometryFactory geometryFactory = new GeometryFactory();
+        return geometryFactory.createPoint(new Coordinate(x, y));
+    }
+
+    public static LineString createLineGeometry(Envelope envelope) {
+        Coordinate[] coordinates = new Coordinate[2];
+        coordinates[0] = new Coordinate(envelope.getMinX(), envelope.getMinY());
+        coordinates[1] = new Coordinate(envelope.getMaxX(), envelope.getMaxY());
+        GeometryFactory geometryFactory = new GeometryFactory();
+        return geometryFactory.createLineString(coordinates);
+    }
+
+    public static boolean isPoint(Envelope envelope) {
+        return envelope.getMinX() == envelope.getMaxX() && envelope.getMinY() == envelope.getMaxY();
+    }
+
+    public static boolean isLine(Envelope envelope) {
+        return !isPoint(envelope) && (envelope.getMinX() == envelope.getMaxX() || envelope.getMinY() == envelope.getMaxY());
+    }
+
 
     public static Tuple2<PolygonState, Geometry> clip(Envelope node, Geometry polygon) {
 
         PolygonState state;
         Geometry clippedPolygon = null;
 
-        try {
-
+        if(isPoint(node)) {
+            Point point = createPointGeometry(node.getMinX(), node.getMinY());
+            if(polygon.contains(point) || polygon.intersects(point)){
+                clippedPolygon = point;
+                state = PolygonState.WITHIN;
+            } else {
+                state = PolygonState.OUTSIDE;
+            }
+        } else if(isLine(node)) {
+            LineString line = createLineGeometry(node);
+            if(polygon.contains(line)){
+                clippedPolygon = line;
+                state = PolygonState.WITHIN;
+            } else if(polygon.intersects(line)) {
+                clippedPolygon = polygon.intersection(line);
+                state = PolygonState.INTERSECT;
+            } else {
+                state = PolygonState.OUTSIDE;
+            }
+        } else {
             Geometry nodeGeometry = createEnvelopeGeometry(node);
 
-            if(!node.intersects(polygon.getEnvelopeInternal()) && !polygon.intersects(nodeGeometry.getCentroid())) {
+            if(polygon.getEnvelopeInternal().disjoint(node) || polygon.disjoint(nodeGeometry)) {
                 state = PolygonState.OUTSIDE;
+            } else if(polygon.contains(nodeGeometry)) {
+                clippedPolygon = nodeGeometry;
+                state = PolygonState.WITHIN;
             } else {
                 clippedPolygon = polygon.intersection(nodeGeometry);
-
-                if (!clippedPolygon.isEmpty()) {
-                    if(clippedPolygon.equalsExact(nodeGeometry)) {
-                        state = PolygonState.WITHIN;
-                    }
-                    else {
-                        state = PolygonState.INTERSECT;
-                    }
+                if(clippedPolygon.equalsExact(nodeGeometry)) {
+                    state = PolygonState.WITHIN;
                 } else {
-                    // node is a line or point
-                    if (polygon.intersects(nodeGeometry.getCentroid()) ) {
-                        state = PolygonState.WITHIN;
-                        clippedPolygon = nodeGeometry;
-                    } else {
-                        state = PolygonState.OUTSIDE;
-                    }
+                    state = PolygonState.INTERSECT;
                 }
             }
-
-        } catch (Exception ignore) {
-            state = PolygonState.INVALID;
         }
 
         return new Tuple2<>(state, clippedPolygon);

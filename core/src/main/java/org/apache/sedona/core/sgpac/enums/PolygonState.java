@@ -9,6 +9,5 @@ import java.io.Serializable;
 public enum PolygonState implements Serializable {
     WITHIN,
     INTERSECT,
-    OUTSIDE,
-    INVALID
+    OUTSIDE
 }
