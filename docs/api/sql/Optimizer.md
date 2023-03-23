@@ -1,8 +1,10 @@
-# SedonaSQL query optimizer
 Sedona Spatial operators fully supports Apache SparkSQL query optimizer. It has the following query optimization features:
 
 * Automatically optimizes range join query and distance join query.
 * Automatically performs predicate pushdown.
+
+!!! tip
+	Sedona join performance is heavily affected by the number of partitions. If the join performance is not ideal, please increase the number of partitions by doing `df.repartition(XXX)` right after you create the original DataFrame.
 
 ## Range join
 Introduction: Find geometries from A and geometries from B such that each geometry pair satisfies a certain predicate. Most predicates supported by SedonaSQL can trigger a range join.
@@ -41,6 +43,7 @@ RangeJoin polygonshape#20: geometry, pointshape#43: geometry, false
 	All join queries in SedonaSQL are inner joins
 
 ## Distance join
+
 Introduction: Find geometries from A and geometries from B such that the internal Euclidean distance of each geometry pair is less or equal than a certain distance
 
 Spark SQL Example:
@@ -70,13 +73,17 @@ DistanceJoin pointshape1#12: geometry, pointshape2#33: geometry, 2.0, true
 ```
 
 !!!warning
-	Sedona doesn't control the distance's unit (degree or meter). It is same with the geometry. To change the geometry's unit, please transform the coordinate reference system. See [ST_Transform](Function.md#st_transform).
+	Sedona doesn't control the distance's unit (degree or meter). It is same with the geometry. If your coordinates are in the longitude and latitude system, the unit of `distance` should be degree instead of meter or mile. To change the geometry's unit, please either transform the coordinate reference system to a meter-based system. See [ST_Transform](Function.md#st_transform). If you don't want to transform your data and are ok with sacrificing the query accuracy, you can use an approximate degree value for distance. Please use [this calculator](https://lucidar.me/en/online-unit-converter-length-to-angle/convert-degrees-to-meters/#online-converter).
 
-## Broadcast join
-Introduction: Perform a range join or distance join but broadcast one of the sides of the join.
-This maintains the partitioning of the non-broadcast side and doesn't require a shuffle.
+## Broadcast index join
+
+Introduction: Perform a range join or distance join but broadcast one of the sides of the join. This maintains the partitioning of the non-broadcast side and doesn't require a shuffle.
+
+Sedona will create a spatial index on the broadcasted table.
+
 Sedona uses broadcast join only if the correct side has a broadcast hint.
-The supported join type - broadcast side combinations are
+The supported join type - broadcast side combinations are:
+
 * Inner - either side, preferring to broadcast left if both sides have the hint
 * Left semi - broadcast right
 * Left anti - broadcast right
@@ -117,9 +124,95 @@ BroadcastIndexJoin pointshape#52: geometry, BuildRight, BuildLeft, true, 2.0 ST_
 
 Note: If the distance is an expression, it is only evaluated on the first argument to ST_Distance (`pointDf1` above).
 
-## Predicate pushdown
+## Auotmatic broadcast index join
 
-Introduction: Given a join query and a predicate in the same WHERE clause, first executes the Predicate as a filter, then executes the join query*
+When one table involved a spatial join query is smaller than a threadhold, Sedona will automatically choose broadcast index join instead of Sedona optimized join. The current threshold is controlled by [sedona.join.autoBroadcastJoinThreshold](../Parameter) and set to the same as `spark.sql.autoBroadcastJoinThreshold`.
+
+## Google S2 based approximate equi-join
+
+If the performance of Sedona optimized join is not ideal, which is possibly caused by  complicated and overlapping geometries, you can resort to Sedona built-in Google S2-based approximate equi-join. This equi-join leverages Spark's internal equi-join algorithm and might be performant given that you can opt to skip the refinement step  by sacrificing query accuracy.
+
+Please use the following steps:
+
+### 1. Generate S2 ids for both tables
+
+Use [ST_S2CellIds](../Function/#st_s2cellids) to generate cell IDs. Each geometry may produce one or more IDs.
+
+```sql
+SELECT id, geom, name, explode(ST_S2CellIDs(geom, 15)) as cellId
+FROM lefts
+```
+
+```sql
+SELECT id, geom, name, explode(ST_S2CellIDs(geom, 15)) as cellId
+FROM rights
+```
+
+### 2. Perform equi-join
+
+Join the two tables by their S2 cellId
+
+```sql
+SELECT lcs.id as lcs_id, lcs.geom as lcs_geom, lcs.name as lcs_name, rcs.id as rcs_id, rcs.geom as rcs_geom, rcs.name as rcs_name
+FROM lcs JOIN rcs ON lcs.cellId = rcs.cellId
+```
+
+
+### 3. Optional: Refine the result
+
+Due to the nature of S2 Cellid, the equi-join results might have a few false-positives depending on the S2 level you choose. A smaller level indicates bigger cells, less exploded rows, but more false positives.
+
+To ensure the correctness, you can use one of the [Spatial Predicates](../Predicate/) to filter out them. Use this query instead of the query in Step 2.
+
+```sql
+SELECT lcs.id as lcs_id, lcs.geom as lcs_geom, lcs.name as lcs_name, rcs.id as rcs_id, rcs.geom as rcs_geom, rcs.name as rcs_name
+FROM lcs, rcs
+WHERE lcs.cellId = rcs.cellId AND ST_Contains(lcs.geom, rcs.geom)
+```
+
+As you see, compared to the query in Step 2, we added one more filter, which is `ST_Contains`, to remove false positives. You can also use `ST_Intersects` and so on.
+
+!!!tip
+	You can skip this step if you don't need 100% accuracy and want faster query speed.
+
+### 4. Optional: De-duplcate
+
+Due to the explode function used when we generate S2 Cell Ids, the resulting DataFrame may have several duplicate <lcs_geom, rcs_geom> matches. You can remove them by performing a GroupBy query.
+
+```sql
+SELECT lcs_id, rcs_id , first(lcs_geom), first(lcs_name), first(rcs_geom), first(rcs_name)
+FROM joinresult
+GROUP BY (lcs_id, rcs_id)
+```
+
+The `first` function is to take the first value from a number of duplicate values.
+
+If you don't have a unique id for each geometry, you can also group by geometry itself. See below:
+
+```sql
+SELECT lcs_geom, rcs_geom, first(lcs_name), first(rcs_name)
+FROM joinresult
+GROUP BY (lcs_geom, rcs_geom)
+```
+
+!!!note
+	If you are doing point-in-polygon join, this is not a problem and you can safely discard this issue. This issue only happens when you do polygon-polygon, polygon-linestring, linestring-linestring join.
+ 
+### S2 for distance join
+
+This also works for distance join. You first need to use `ST_Buffer(geometry, distance)` to wrap one of your original geometry column. If your original geometry column contains points, this `ST_Buffer` will make them become circles with a radius of `distance`.
+
+For example. run this query first on the left table before Step 1.
+
+```sql
+SELECT id, ST_Buffer(geom, DISTANCE), name
+FROM lefts
+```
+
+Since the coordinates are in the longitude and latitude system, so the unit of `distance` should be degree instead of meter or mile. You will have to estimate the corresponding degrees based on your meter values. Please use [this calculator](https://lucidar.me/en/online-unit-converter-length-to-angle/convert-degrees-to-meters/#online-converter).
+
+## Regular spatial predicate pushdown
+Introduction: Given a join query and a predicate in the same WHERE clause, first executes the Predicate as a filter, then executes the join query.
 
 Spark SQL Example:
 
@@ -142,12 +235,20 @@ RangeJoin polygonshape#20: geometry, pointshape#43: geometry, false
    +- *FileScan csv
 ```
 
-### GeoParquet
+## Push spatial predicates to GeoParquet
 
 Sedona supports spatial predicate push-down for GeoParquet files. When spatial filters were applied to dataframes backed by GeoParquet files, Sedona will use the
 [`bbox` properties in the metadata](https://github.com/opengeospatial/geoparquet/blob/v1.0.0-beta.1/format-specs/geoparquet.md#bbox)
 to determine if all data in the file will be discarded by the spatial predicate. This optimization could reduce the number of files scanned
 when the queried GeoParquet dataset was partitioned by spatial proximity.
+
+To maximize the performance of Sedona GeoParquet filter pushdown, we suggest that you sort the data by their geohash values (see [ST_GeoHash](../../api/sql/Function/#st_geohash)) and then save as a GeoParquet file. An example is as follows:
+
+```
+SELECT col1, col2, geom, ST_GeoHash(geom, 5) as geohash
+FROM spatialDf
+ORDER BY geohash
+```
 
 The following figure is the visualization of a GeoParquet dataset. `bbox`es of all GeoParquet files were plotted as blue rectangles and the query window was plotted as a red rectangle. Sedona will only scan 1 of the 6 files to
 answer queries such as `SELECT * FROM geoparquet_dataset WHERE ST_Intersects(geom, <query window>)`, thus only part of the data covered by the light green rectangle needs to be scanned.
