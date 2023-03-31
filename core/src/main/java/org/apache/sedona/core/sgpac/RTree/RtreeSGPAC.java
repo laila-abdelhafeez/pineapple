@@ -11,106 +11,25 @@ import org.locationtech.jts.index.strtree.STRtree;
 import scala.Tuple2;
 
 import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class RtreeSGPAC implements SGPAC {
-
-    STRtree dataIndex;
+public class RtreeSGPAC extends SGPAC {
     AbstractNode root;
-    Envelope boundary;
 
     public RtreeSGPAC(STRtree dataIndex) {
-        this.dataIndex = dataIndex;
+        super(dataIndex);
         root = dataIndex.getRoot();
     }
 
-    public Set<Tuple2<String, Integer>> query(GeometryCollection polygonLayer, QueryMethod method) {
-
-        Set<Tuple2<String, Integer>> results = new HashSet<Tuple2<String, Integer>>();
-        int numberOfGeometries = polygonLayer.getNumGeometries();
-
-        switch (method) {
-            case FR:
-                for(int i = 0; i < numberOfGeometries; ++i) {
-                    Geometry geometry = polygonLayer.getGeometryN(i);
-                    String geometryName = geometry.getUserData().toString();
-                    int size = FR(geometry);
-                    results.add(new Tuple2<>(geometryName, size));
-                }
-                break;
-
-            case SGPAC_1L:
-                for(int i = 0; i < numberOfGeometries; ++i) {
-                    Geometry geometry = polygonLayer.getGeometryN(i);
-                    String geometryName = geometry.getUserData().toString();
-                    int size = SGPAC_1L(geometry);
-                    results.add(new Tuple2<>(geometryName, size));
-                }
-                break;
-
-            case SGPAC_2L:
-                for(int i = 0; i < numberOfGeometries; ++i) {
-                    Geometry geometry = polygonLayer.getGeometryN(i);
-                    String geometryName = geometry.getUserData().toString();
-                    int size = SGPAC_2L(geometry);
-                    results.add(new Tuple2<>(geometryName, size));
-                }
-                break;
-        }
-
-        return results;
+    public RtreeSGPAC(STRtree dataIndex, int estimatorCellCount) {
+        super(dataIndex, estimatorCellCount);
+        root = dataIndex.getRoot();
     }
 
-    @Override
-    public void setBoundary(Envelope envelope) {
-        boundary = envelope;
-    }
-
-
-    public Integer FR(Geometry queryPolygon) {
-        List<Geometry> result = new ArrayList<>();
-        List<Geometry> candidateSet = dataIndex.query(queryPolygon.getEnvelopeInternal());
-        for (Geometry candidateItem : candidateSet) {
-            if(queryPolygon.contains(candidateItem) || queryPolygon.intersects(candidateItem)) {
-                result.add(candidateItem);
-            }
-        }
-        return result.size();
-    }
-
-    public Integer SGPAC_1L(Geometry queryPolygon) {
-        Tuple2<PolygonState, Geometry> partitionClip = PolygonClip.clip(boundary, queryPolygon);
-        PolygonState state = partitionClip._1();
-        Geometry clippedPolygon = partitionClip._2();
-
-        switch (state) {
-            case WITHIN:
-                return dataIndex.query(boundary).size();
-            case INTERSECT:
-                return FR(clippedPolygon);
-        }
-        return 0;
-    }
-
-    public Integer SGPAC_2L(Geometry queryPolygon) {
-
-        Tuple2<PolygonState, Geometry> partitionClip = PolygonClip.clip(boundary, queryPolygon);
-        PolygonState state = partitionClip._1();
-        Geometry clippedPolygon = partitionClip._2();
-
-        switch (state) {
-            case WITHIN:
-                return dataIndex.query(boundary).size();
-            case INTERSECT:
-                if(!dataIndex.isEmpty()) {
-                    List<Geometry> result = new ArrayList<>();
-                    query(clippedPolygon, root, false, result);
-                    return result.size();
-                }
-        }
-        return 0;
+    public void query(Geometry queryPolygon, List<Geometry> result) {
+        STRtree tree = (STRtree) dataIndex;
+        if(!tree.isEmpty()) query(queryPolygon, root, false, result);
     }
 
     public void query(Geometry queryPolygon, Object node, boolean within, List<Geometry> result) {
@@ -156,6 +75,68 @@ public class RtreeSGPAC implements SGPAC {
             }
         }
 
+    }
+
+    protected double estimatePolygon(Geometry geometry, QueryMethod method) {
+
+        double candidateSet;
+        double n;
+        double operationsCount;
+
+        switch (method) {
+            case FR: {
+                candidateSet = getCountInMBR(geometry.getEnvelopeInternal())._1;
+                n = geometry.getNumPoints();
+                operationsCount = candidateSet*n;
+                return operationsCount;
+            }
+
+            case SGPAC_2L: {
+                Tuple2<Integer, Integer> countIntersectTuple = getCountInMBR(geometry.getEnvelopeInternal());
+                n = geometry.getNumPoints();
+                candidateSet = countIntersectTuple._1;
+                int cellCount = countIntersectTuple._2;
+
+                STRtree tree = (STRtree) dataIndex;
+
+                int factorMedDepth = (int)Math.pow(tree.getNodeCapacity(), tree.depth()/2.0);
+                double intersect = cellCount*(n/factorMedDepth)*Math.log10(n/factorMedDepth);
+
+                double modifiedN = n/factorMedDepth;
+                operationsCount = modifiedN*candidateSet + intersect;
+                return operationsCount;
+            }
+
+            default:
+                return 0.0;
+
+        }
+    }
+
+    protected Set<Envelope> getIntersectingCells(Envelope queryMBR) {
+        Set<Envelope> result = new HashSet<>();
+        if(queryMBR.contains(boundary)) {
+            result.add(boundary);
+        } else if(queryMBR.intersects(boundary)) {
+            List children = root.getChildBoundables();
+            for(Object child : children) getIntersectingCells(child, queryMBR, result);
+        }
+        return result;
+    }
+
+    private void getIntersectingCells(Object node, Envelope queryMBR, Set<Envelope> cells) {
+        if(node instanceof AbstractNode)  {
+            AbstractNode currentNode = (AbstractNode) node;
+            Envelope currentEnvelope = (Envelope)currentNode.getBounds();
+
+            if(queryMBR.contains(currentEnvelope)) {
+                cells.add(currentEnvelope);
+            } else if(queryMBR.intersects(currentEnvelope)) {
+                cells.add(currentEnvelope);
+                List children = currentNode.getChildBoundables();
+                for(Object child : children) getIntersectingCells(child, queryMBR, cells);
+            }
+        }
     }
 
 }

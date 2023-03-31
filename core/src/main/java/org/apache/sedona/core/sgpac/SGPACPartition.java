@@ -2,7 +2,6 @@ package org.apache.sedona.core.sgpac;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.sedona.core.sgpac.RTree.RtreeSGPAC;
-import org.apache.sedona.core.sgpac.RTree.RtreeSGPACQO;
 import org.apache.sedona.core.sgpac.enums.QueryMethod;
 import org.apache.spark.TaskContext;
 import org.apache.spark.api.java.function.FlatMapFunction2;
@@ -76,7 +75,7 @@ public class SGPACPartition<U extends Geometry>
                 STRtree rtreeIndex = (STRtree) dataIndex;
 
                 if(queryMethod == QueryMethod.SGPAC_QO) {
-                    sgpacQuery =  new RtreeSGPACQO(rtreeIndex, estimatorCellCount);
+                    sgpacQuery =  new RtreeSGPAC(rtreeIndex, estimatorCellCount);
                 } else {
                     sgpacQuery = new RtreeSGPAC(rtreeIndex);
                 }
