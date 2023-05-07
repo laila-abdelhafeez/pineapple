@@ -1,5 +1,11 @@
 package org.apache.sedona.core.ddcel.entries;
 
+import org.locationtech.jts.geom.Geometry;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class Face implements DDCELEntry {
 
     private final Cycle outerComponents;
@@ -61,12 +67,16 @@ public class Face implements DDCELEntry {
     }
     @Override
     public String toString() {
-        String face;
-        if(incompleteCycle) {
-            face = "LINESTRING ((" + outerComponents;
-        } else {
-            face = "POLYGON ((" + outerComponents;
-        }
-        return face.substring(0, face.length()-2) + "))";
+        return outerComponents.toString();
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        return outerComponents.toPolygon();
+    }
+
+    @Override
+    public List<Object> getParams() {
+        return new ArrayList<>(Collections.singletonList(area));
     }
 }

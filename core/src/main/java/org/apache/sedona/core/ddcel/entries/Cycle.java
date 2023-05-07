@@ -2,12 +2,13 @@ package org.apache.sedona.core.ddcel.entries;
 
 
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
+import org.wololo.geojson.Feature;
+import org.wololo.jts2geojson.GeoJSONWriter;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Cycle implements Serializable {
 
@@ -119,14 +120,21 @@ public class Cycle implements Serializable {
         result.edgesInCycle.remove(edgesInCycle.size()-1);
         return result;
     }
+
+    public Polygon toPolygon() {
+        GeometryFactory factory = new GeometryFactory();
+        Coordinate[] coordinates = new Coordinate[edgesInCycle.size()];
+        for(int i = 0; i < edgesInCycle.size(); ++i) {
+            coordinates[i] = edgesInCycle.get(i).source;
+        }
+        return factory.createPolygon(coordinates);
+    }
+
     @Override
     public String toString() {
-        StringBuilder cycle = new StringBuilder();
-        for (DirectedEdge directedEdge: edgesInCycle) {
-            cycle.append(directedEdge);
-        }
-        return cycle.toString();
+        return toPolygon().toString();
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -135,7 +143,8 @@ public class Cycle implements Serializable {
         Cycle cycle = (Cycle) o;
         Set<DirectedEdge> edgesSet1 = new HashSet<>(edgesInCycle);
         Set<DirectedEdge> edgesSet2 = new HashSet<>(cycle.edgesInCycle);
-        return edgesSet1.equals(edgesSet2);    }
+        return edgesSet1.equals(edgesSet2);
+    }
 
     @Override
     public int hashCode() {

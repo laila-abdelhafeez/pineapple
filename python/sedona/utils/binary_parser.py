@@ -115,6 +115,9 @@ class BinaryParser:
         bytes = bytearray(reversed(self._convert_to_binary_array(bytes[self.current_index: max_index])))
         return struct.unpack(tp, bytes)[0]
 
+    def has_next(self):
+        return self.current_index < len(self.bytes)
+
     @classmethod
     def remove_negatives(cls, bytes):
         return [cls.remove_negative(bt) for bt in bytes]

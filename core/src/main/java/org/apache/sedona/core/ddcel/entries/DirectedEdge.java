@@ -36,7 +36,7 @@ public class DirectedEdge implements Serializable {
 
     @Override
     public String toString() {
-        return "{(" + source.x + ", " + source.y + ") -> (" + destination.x + ", " + destination.y + ")}";
+        return toLineString().toString();
     }
 
 }

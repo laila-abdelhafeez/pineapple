@@ -23,6 +23,9 @@ class JvmSedonaPythonConverter:
     def __init__(self, jvm):
         self._jvm = jvm
 
+    def translate_ddcel_rdd_to_python(self, ddcel_rdd):
+        return self._jvm.PythonDDCELConverter.translateDDCELRDDToPython(ddcel_rdd)
+
     def translate_spatial_rdd_to_python(self, spatial_rdd):
         return self._jvm.PythonConverter.translateSpatialRDDToPython(spatial_rdd)
 

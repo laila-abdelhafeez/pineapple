@@ -46,7 +46,7 @@ public class StandardQuadTree<T> extends PartitioningUtils
     // Maximum number of items in any given zone. When reached, a zone is sub-divided.
     private final int maxItemsPerZone;
     private final int maxLevel;
-    protected final int level;
+    private final int level;
     // the current nodes
     private final List<QuadNode<T>> nodes = new ArrayList<>();
     // current rectangle zone
@@ -72,6 +72,10 @@ public class StandardQuadTree<T> extends PartitioningUtils
     public QuadRectangle getZone()
     {
         return this.zone;
+    }
+
+    public int getLevel() {
+        return this.level;
     }
 
     private int findRegion(QuadRectangle r, boolean split)

@@ -14,10 +14,10 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-
+from .ddcel_enums import RepartitioningScheme, RemMethod
 from .file_data_splitter import FileDataSplitter
 from .grid_type import GridType
 from .index_type import IndexType
 from .join_build_side import JoinBuildSide
 
-__all__ = ["FileDataSplitter", "GridType", "IndexType", "JoinBuildSide"]
+__all__ = ["FileDataSplitter", "GridType", "IndexType", "JoinBuildSide", "RemMethod", "RepartitioningScheme"]

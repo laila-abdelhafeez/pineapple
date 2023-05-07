@@ -18,7 +18,22 @@
 from pyspark import SparkContext, RDD
 
 from sedona.core.jvm.translate import JvmSedonaPythonConverter
+from sedona.utils.ddcel_parser import DDCELPickler
 from sedona.utils.spatial_rdd_parser import SedonaPickler
+
+
+class DDCEL:
+
+    def __init__(self, jsrdd, sc: SparkContext):
+        self.jsrdd = jsrdd
+        self.sc = sc
+
+    def to_rdd(self) -> RDD:
+        jvm = self.sc._jvm
+        serialized = JvmSedonaPythonConverter(jvm). \
+            translate_ddcel_rdd_to_python(self.jsrdd)
+
+        return RDD(serialized, self.sc, DDCELPickler())
 
 
 class SedonaRDD:

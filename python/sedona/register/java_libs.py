@@ -53,6 +53,13 @@ class SedonaJvmLib(Enum):
     st_predicates = "org.apache.spark.sql.sedona_sql.expressions.st_predicates"
     st_aggregates = "org.apache.spark.sql.sedona_sql.expressions.st_aggregates"
     SGPACQuery = "org.apache.sedona.core.sgpac.SGPACQuery"
+    QuadTreeDDCEL = "org.apache.sedona.core.ddcel.QuadTreeDDCEL"
+    RemMethod = "org.apache.sedona.core.ddcel.enums.RemMethod"
+    RepartitioningScheme = "org.apache.sedona.core.ddcel.enums.RepartitioningScheme"
+    Vertex = "org.apache.sedona.core.ddcel.entries.Vertex"
+    HalfEdge = "org.apache.sedona.core.ddcel.entries.HalfEdge"
+    Face = "org.apache.sedona.core.ddcel.entries.Face"
+    PythonDDCELConverter = "org.apache.sedona.python.wrapper.ddcel.PythonDDCELConverter"
 
     @classmethod
     def from_str(cls, geo_lib: str) -> 'SedonaJvmLib':

@@ -1,9 +1,12 @@
 package org.apache.sedona.core.ddcel.entries;
 
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Vertex implements DDCELEntry {
 
@@ -40,9 +43,20 @@ public class Vertex implements DDCELEntry {
     public void setAsDangle() {
         isDangle = true;
     }
+
+    public Point toPoint() {
+        GeometryFactory factory = new GeometryFactory();
+        return factory.createPoint(coordinates);
+    }
+
     @Override
     public String toString() {
-        return "Vertex{" + coordinates + '}';
+        StringBuilder builder = new StringBuilder();
+        builder.append(toPoint().toString()).append("\t");
+        for(DirectedEdge incident : incidentH) {
+            builder.append(incident).append("\t");
+        }
+        return builder.toString();
     }
 
     @Override
@@ -52,4 +66,13 @@ public class Vertex implements DDCELEntry {
         return this.coordinates == other.coordinates;
     }
 
+    @Override
+    public Geometry getGeometry() {
+        return toPoint();
+    }
+
+    @Override
+    public List<Object> getParams() {
+        return incidentH.stream().map(DirectedEdge::toLineString).collect(Collectors.toList());
+    }
 }

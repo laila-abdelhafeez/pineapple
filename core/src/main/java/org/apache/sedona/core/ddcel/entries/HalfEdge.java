@@ -1,8 +1,14 @@
 package org.apache.sedona.core.ddcel.entries;
 
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 
-public class HalfEdge implements DDCELEntry {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class HalfEdge implements DDCELEntry{
 
     private final DirectedEdge directedEdge;
     private DirectedEdge twin, next, prev;
@@ -85,6 +91,22 @@ public class HalfEdge implements DDCELEntry {
     }
     @Override
     public String toString() {
-        return directedEdge.toString();
+        return directedEdge + "\t" +
+                twin + "\t" +
+                next + "\t" +
+                incidentF + "\t" +
+                (isDangle ? "True" : "False") + "\t" +
+                (isCutEdge ? "True" : "False") + "\t";
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        return directedEdge.toLineString();
+    }
+
+    @Override
+    public List<Object> getParams() {
+        GeometryFactory factory = new GeometryFactory();
+        return new ArrayList<>(Arrays.asList(twin.toLineString(), next == null? factory.createLineString() : next.toLineString(), incidentF == null? factory.createPolygon() : incidentF.toPolygon(), isDangle, isCutEdge));
     }
 }

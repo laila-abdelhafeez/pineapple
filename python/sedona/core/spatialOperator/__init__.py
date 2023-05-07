@@ -16,6 +16,7 @@
 #  under the License.
 
 from .join_query import JoinQuery
+from .quadtree_ddcel import QuadTreeDDCEL
 from .range_query import RangeQuery
 from .knn_query import KNNQuery
 from .join_query_raw import JoinQueryRaw
@@ -23,7 +24,7 @@ from .range_query_raw import RangeQueryRaw
 from .sgpac_query import SGPACQuery
 
 __all__ = [
-    "JoinQuery", "RangeQuery", "KNNQuery", "JoinQueryRaw", "RangeQueryRaw", "SGPACQuery"
+    "JoinQuery", "RangeQuery", "KNNQuery", "JoinQueryRaw", "RangeQueryRaw", "SGPACQuery", "QuadTreeDDCEL"
 ]
 
 

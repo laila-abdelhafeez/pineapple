@@ -28,20 +28,21 @@ public class DDCELQuadTree<T> extends StandardQuadTree<T> {
         if(level == -1) return findZones(new QuadRectangle(envelope));
 
         final List<QuadRectangle> matches = new ArrayList<>();
-        traverse(tree -> {
 
-            DDCELQuadTree<T> DDCELQuadTree = (DDCELQuadTree<T>) tree;
-            if (!disjoint(DDCELQuadTree.getZone().getEnvelope(), envelope)){
-                if(DDCELQuadTree.level == level || DDCELQuadTree.isLeaf()) {
-                    matches.add(DDCELQuadTree.getZone());
+        traverse(new Visitor<T>() {
+            @Override
+            public boolean visit(StandardQuadTree<T> tree) {
+                if (!disjoint(tree.getZone().getEnvelope(), envelope)){
+                    if(tree.getLevel() == level || tree.isLeaf()) {
+                        matches.add(tree.getZone());
+                        return false;
+                    }
+                    return true;
+
+                } else {
                     return false;
                 }
-                return true;
-
-            } else {
-                return false;
-            }
-        });
+            }});
 
         return matches;
     }
@@ -56,9 +57,8 @@ public class DDCELQuadTree<T> extends StandardQuadTree<T> {
             @Override
             public boolean visit(StandardQuadTree<T> tree)
             {
-                DDCELQuadTree<T> DDCELQuadTree = (DDCELQuadTree<T>) tree;
-                if (DDCELQuadTree.level == level || DDCELQuadTree.isLeaf()) {
-                    leafZones.add(DDCELQuadTree.getZone().getEnvelope());
+                if (tree.getLevel() == level || tree.isLeaf()) {
+                    leafZones.add(tree.getZone().getEnvelope());
                     return false;
                 }
                 return true;
@@ -76,9 +76,8 @@ public class DDCELQuadTree<T> extends StandardQuadTree<T> {
             @Override
             public boolean visit(StandardQuadTree<T> tree)
             {
-                DDCELQuadTree<T> DDCELQuadTree = (DDCELQuadTree<T>) tree;
-                if (DDCELQuadTree.level == level || DDCELQuadTree.isLeaf()) {
-                    DDCELQuadTree.getZone().partitionId = partitionId;
+                if (tree.getLevel() == level || tree.isLeaf()) {
+                    tree.getZone().partitionId = partitionId;
                     partitionId++;
                     return false;
                 }
@@ -95,9 +94,8 @@ public class DDCELQuadTree<T> extends StandardQuadTree<T> {
             @Override
             public boolean visit(StandardQuadTree<T> tree)
             {
-                DDCELQuadTree<T> DDCELQuadTree = (DDCELQuadTree<T>) tree;
-                if (DDCELQuadTree.isLeaf() && DDCELQuadTree.level > maxLevel.toInteger()) {
-                    maxLevel.setValue(DDCELQuadTree.level);
+                if (tree.isLeaf() && tree.getLevel() > maxLevel.toInteger()) {
+                    maxLevel.setValue(tree.getLevel());
                 }
                 return true;
             }

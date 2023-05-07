@@ -35,7 +35,7 @@ public class QuadTreeDDCEL extends DDCEL {
         build(RemMethod.DDCEL_IC, RepartitioningScheme.MU);
     }
 
-    public void partition(List<Envelope> samples, Envelope boundary, int capacity, int maxTreeLevel, int minTreeLevel)
+    private void partition(List<Envelope> samples, Envelope boundary, int capacity, int maxTreeLevel, int minTreeLevel)
     throws Exception {
         treePartitioning = new DDCELQuadtreePartitioning(samples, boundary, capacity, maxTreeLevel, minTreeLevel);
         tree = treePartitioning.getPartitionTree();

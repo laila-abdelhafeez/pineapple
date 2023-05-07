@@ -69,7 +69,6 @@ abstract public class DDCEL implements Serializable {
         Gen(partitionDCEL);
         JavaRDD<DDCELEntry> remPhaseInput = partitionDCEL.flatMap((FlatMapFunction<GenOutput, DDCELEntry>) dcel -> dcel.getRemainingData().iterator());
         Rem(remPhaseInput, remMethod, repartitioningScheme);
-
     }
 
     private JavaRDD<DDCELEntry> repartition(JavaRDD<DDCELEntry> remainingData, final DDCELEntryPartitioner partitioner) {
@@ -115,7 +114,6 @@ abstract public class DDCEL implements Serializable {
     public JavaRDD<Vertex> getVertices() {
         return vertices;
     }
-
     private void setHalfEdges(JavaRDD<HalfEdge> halfEdges) {
         this.halfEdges = halfEdges;
     }
@@ -129,4 +127,14 @@ abstract public class DDCEL implements Serializable {
     public Iterator<JavaRDD<Face>> getFaces() {
         return faces.iterator();
     }
+
+    public JavaRDD<Face> getFacesAt(int index) {
+        if(index < faces.size()) return faces.get(index);
+        return null;
+    }
+
+    public int j(){
+        return faces.size();
+    }
+
 }
