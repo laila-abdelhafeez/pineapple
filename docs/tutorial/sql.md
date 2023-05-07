@@ -89,6 +89,7 @@ Use the following code to initiate your SparkSession at the beginning:
 	           'org.datasyslab:geotools-wrapper:{{ sedona.current_geotools }}'). \
 	    getOrCreate()
 	```
+    If you are using Spark versions >= 3.4, please replace the `3.0` in package name of sedona-spark-shaded with the corresponding major.minor version of Spark, such as `sedona-spark-shaded-3.4_2.12:{{ sedona.current_version }}`.
 
 !!!warning
 	Sedona has a suite of well-written geometry and index serializers. Forgetting to enable these serializers will lead to high memory consumption and slow performance.
@@ -305,7 +306,7 @@ For Postgis there is no need to add a query to convert geometry types since it's
 === "Scala"
 
 	```scala
-	// For any JDBC data source, inluding Postgis.
+	// For any JDBC data source, including Postgis.
 	val df = sparkSession.read.format("jdbc")
 		// Other options.
 		.option("query", "SELECT id, ST_AsBinary(geom) as geom FROM my_table")
@@ -323,7 +324,7 @@ For Postgis there is no need to add a query to convert geometry types since it's
 === "Java"
 
 	```java
-	// For any JDBC data source, inluding Postgis.
+	// For any JDBC data source, including Postgis.
 	Dataset<Row> df = sparkSession.read().format("jdbc")
 		// Other options.
 		.option("query", "SELECT id, ST_AsBinary(geom) as geom FROM my_table")
@@ -341,7 +342,7 @@ For Postgis there is no need to add a query to convert geometry types since it's
 === "Python"
 
 	```python
-	# For any JDBC data source, inluding Postgis.
+	# For any JDBC data source, including Postgis.
 	df = (sparkSession.read.format("jdbc")
 		# Other options.
 		.option("query", "SELECT id, ST_AsBinary(geom) as geom FROM my_table")

@@ -13,33 +13,67 @@
  */
 package org.apache.sedona.common.raster;
 
+import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.locationtech.jts.geom.*;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 
 import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.DoublePredicate;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 public class Functions {
 
-    public static Geometry envelope(GridCoverage2D raster) {
+    public static Geometry envelope(GridCoverage2D raster) throws FactoryException {
         Envelope2D envelope2D = raster.getEnvelope2D();
 
         Envelope envelope = new Envelope(envelope2D.getMinX(), envelope2D.getMaxX(), envelope2D.getMinY(), envelope2D.getMaxY());
-        return new GeometryFactory().toGeometry(envelope);
+        int srid = srid(raster);
+        return new GeometryFactory(new PrecisionModel(), srid).toGeometry(envelope);
     }
 
     public static int numBands(GridCoverage2D raster) {
         return raster.getNumSampleDimensions();
+    }
+
+    public static GridCoverage2D setSrid(GridCoverage2D raster, int srid) throws FactoryException {
+        CoordinateReferenceSystem crs;
+        if (srid == 0) {
+            crs = DefaultEngineeringCRS.CARTESIAN_2D;
+        } else {
+            crs = CRS.decode("EPSG:" + srid);
+        }
+        ReferencedEnvelope referencedEnvelope = new ReferencedEnvelope(raster.getEnvelope2D(), crs);
+        GridCoverageFactory gridCoverageFactory = CoverageFactoryFinder.getGridCoverageFactory(null);
+        return gridCoverageFactory.create(raster.getName().toString(), raster.getRenderedImage(), referencedEnvelope);
+    }
+
+    public static int srid(GridCoverage2D raster) throws FactoryException {
+        CoordinateReferenceSystem crs = raster.getCoordinateReferenceSystem();
+        if (crs instanceof DefaultEngineeringCRS) {
+            // GeoTools defaults to internal non-standard epsg codes, like 404000, if crs is missing.
+            // We need to check for this case and return 0 instead.
+            if (((DefaultEngineeringCRS) crs).isWildcard()) {
+                return 0;
+            }
+        }
+        return Optional.ofNullable(CRS.lookupEpsgCode(crs, true)).orElse(0);
     }
 
     public static Double value(GridCoverage2D rasterGeom, Geometry geometry, int band) throws TransformException {

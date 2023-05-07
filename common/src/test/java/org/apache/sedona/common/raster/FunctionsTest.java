@@ -13,11 +13,13 @@
  */
 package org.apache.sedona.common.raster;
 
+import org.geotools.coverage.grid.GridCoverage2D;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
 
 import java.util.Arrays;
@@ -29,17 +31,39 @@ import static org.junit.Assert.*;
 public class FunctionsTest extends RasterTestBase {
 
     @Test
-    public void envelope() {
+    public void envelope() throws FactoryException {
         Geometry envelope = Functions.envelope(oneBandRaster);
         assertEquals(3600.0d, envelope.getArea(), 0.1d);
         assertEquals(378922.0d + 30.0d, envelope.getCentroid().getX(), 0.1d);
         assertEquals(4072345.0d + 30.0d, envelope.getCentroid().getY(), 0.1d);
+
+        assertEquals(4326, Functions.envelope(multiBandRaster).getSRID());
     }
 
     @Test
     public void testNumBands() {
         assertEquals(1, Functions.numBands(oneBandRaster));
         assertEquals(4, Functions.numBands(multiBandRaster));
+    }
+
+    @Test
+    public void testSetSrid() throws FactoryException {
+        assertEquals(0, Functions.srid(oneBandRaster));
+        assertEquals(4326, Functions.srid(multiBandRaster));
+
+        GridCoverage2D oneBandRasterWithUpdatedSrid = Functions.setSrid(oneBandRaster, 4326);
+        assertEquals(4326, Functions.srid(oneBandRasterWithUpdatedSrid));
+        assertEquals(4326, Functions.envelope(oneBandRasterWithUpdatedSrid).getSRID());
+        assertTrue(Functions.envelope(oneBandRasterWithUpdatedSrid).equalsTopo(Functions.envelope(oneBandRaster)));
+
+        GridCoverage2D multiBandRasterWithUpdatedSrid = Functions.setSrid(multiBandRaster, 0);
+        assertEquals(0 , Functions.srid(multiBandRasterWithUpdatedSrid));
+    }
+
+    @Test
+    public void testSrid() throws FactoryException {
+        assertEquals(0, Functions.srid(oneBandRaster));
+        assertEquals(4326, Functions.srid(multiBandRaster));
     }
 
     @Test

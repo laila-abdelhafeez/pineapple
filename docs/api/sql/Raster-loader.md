@@ -5,7 +5,7 @@ Sedona provides two types of raster DataFrame loaders. They both use Sedona buil
 
 ## Load any raster to RasterUDT format
 
-The raster loader of Sedona leverages Spark built-in binary data source and works with several RS RasterUDT constrcutors to produce RasterUDT type. Each raster is a row in the resulting DataFrame and stored in a `RasterUDT` format.
+The raster loader of Sedona leverages Spark built-in binary data source and works with several RS RasterUDT constructors to produce RasterUDT type. Each raster is a row in the resulting DataFrame and stored in a `RasterUDT` format.
 
 ### Load raster to a binary DataFrame
 
@@ -49,7 +49,7 @@ df = df.withColumn("raster", f.expr("RS_FromGeoTiff(content)"))
 
 ## Load GeoTiff to Array[Double] format
 
-The `geotiff` loader of Sedona is a Spark built-in data source. It can read a single geotiff image or a number of geotiff images into a DataFrame. Each geotiff is a row in the resulting DataFrame and stored in an arrya of Double type format.
+The `geotiff` loader of Sedona is a Spark built-in data source. It can read a single geotiff image or a number of geotiff images into a DataFrame. Each geotiff is a row in the resulting DataFrame and stored in an array of Double type format.
 
 Since: `v1.1.0`
 
