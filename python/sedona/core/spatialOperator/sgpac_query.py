@@ -10,10 +10,10 @@ class SGPACQuery:
     @require(["SGPACQuery"])
     def sgpac2L(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
         """
-
+        Two-Level Clipping
         :param data: SpatialRDD
         :param polygonLayer: SpatialRDD
-        :return:
+        :return: key-value PairRDD
         """
         jvm = data._jvm
         srdd = jvm.SGPACQuery.SGPAC_2L(data._srdd, polygonLayer._srdd)
@@ -23,10 +23,10 @@ class SGPACQuery:
     @require(["SGPACQuery"])
     def sgpac1L(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
         """
-
+        One-Level Clipping
         :param data: SpatialRDD
         :param polygonLayer: SpatialRDD
-        :return:
+        :return: key-value PairRDD
         """
         jvm = data._jvm
         srdd = jvm.SGPACQuery.SGPAC_1L(data._srdd, polygonLayer._srdd)
@@ -36,10 +36,10 @@ class SGPACQuery:
     @require(["SGPACQuery"])
     def sgpacQO(cls, data: SpatialRDD, polygonLayer: SpatialRDD, estimatorCellCount: int) -> RDD:
         """
-
+        Query Optimizer
         :param data: SpatialRDD
         :param polygonLayer: SpatialRDD
-        :return:
+        :return: key-value PairRDD
         """
         jvm = data._jvm
         srdd = jvm.SGPACQuery.SGPAC_QO(data._srdd, polygonLayer._srdd, estimatorCellCount)
@@ -50,10 +50,10 @@ class SGPACQuery:
     @require(["SGPACQuery"])
     def sgpacFR(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
         """
-
+        Filter-Refine
         :param data: SpatialRDD
         :param polygonLayer: SpatialRDD
-        :return:
+        :return: key-value PairRDD
         """
         jvm = data._jvm
         srdd = jvm.SGPACQuery.FilterRefine(data._srdd, polygonLayer._srdd)
@@ -63,10 +63,10 @@ class SGPACQuery:
     @require(["SGPACQuery"])
     def sgpacJoin(cls, data: SpatialRDD, polygonLayer: SpatialRDD) -> RDD:
         """
-
+        Join
         :param data: SpatialRDD
         :param polygonLayer: SpatialRDD
-        :return:
+        :return: key-value PairRDD
         """
         jvm = data._jvm
         srdd = jvm.SGPACQuery.Join(data._srdd, polygonLayer._srdd)
