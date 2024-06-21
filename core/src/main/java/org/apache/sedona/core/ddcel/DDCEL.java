@@ -65,7 +65,7 @@ abstract public class DDCEL implements Serializable {
     abstract protected List<Envelope> getPartitions();
 
     protected void build(RemMethod remMethod, RepartitioningScheme repartitioningScheme) {
-        JavaRDD<GenOutput> partitionDCEL = lineSegmentsRDD.spatialPartitionedRDD.mapPartitions(new GenPhase(getPartitions(), RemMethod.DDCEL_IC));
+        JavaRDD<GenOutput> partitionDCEL = lineSegmentsRDD.spatialPartitionedRDD.mapPartitions(new GenPhase(getPartitions(), remMethod));
         Gen(partitionDCEL);
         JavaRDD<DDCELEntry> remPhaseInput = partitionDCEL.flatMap((FlatMapFunction<GenOutput, DDCELEntry>) dcel -> dcel.getRemainingData().iterator());
         Rem(remPhaseInput, remMethod, repartitioningScheme);
